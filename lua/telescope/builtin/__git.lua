@@ -249,7 +249,9 @@ git.branches = function(opts)
     .. "%(authorname)"
     .. "%(upstream:lstrip=2)"
     .. "%(committerdate:format-local:%Y/%m/%d %H:%M:%S)"
+    .. "%(objectname)"
 
+  local last_branch_hash = get_git_command_output({ "rev-parse", "@{-1}" }, {})[1]
   local output = get_git_command_output(
     { "for-each-ref", "--perl", "--format", format, "--sort", "-authordate", opts.pattern },
     opts
@@ -275,6 +277,7 @@ git.branches = function(opts)
       authorname = unescape_single_quote(fields[3]),
       upstream = unescape_single_quote(fields[4]),
       committerdate = fields[5],
+      objectname = fields[6],
     }
     local prefix
     if vim.startswith(entry.refname, "refs/remotes/") then
@@ -288,12 +291,15 @@ git.branches = function(opts)
     else
       return
     end
-    local index = 1
-    if entry.head ~= "*" then
-      index = #results + 1
-    end
+
+    local index = #results + 1
 
     entry.name = string.sub(entry.refname, string.len(prefix) + 1)
+
+    if entry.objectname == last_branch_hash and not vim.startswith(entry.name, "origin") then
+      index = 1
+    end
+
     for key, value in pairs(widths) do
       widths[key] = math.max(value, strings.strdisplaywidth(entry[key] or ""))
     end
