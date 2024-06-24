@@ -558,6 +558,8 @@ internal.oldfiles = function(opts)
     end, results)
   end
 
+  table.remove(results, 1)
+
   pickers
     .new(opts, {
       prompt_title = "Oldfiles",
